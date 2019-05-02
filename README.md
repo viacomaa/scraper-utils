@@ -1,8 +1,9 @@
 # Common Utilities
 
-This repo contains a number of utility functions used by [Match Scrapper apps](https://github.com/WhoSay/dataslinger/tree/master/stream) 
-
 Common low level utilities used in various WHOSAY microservices. 
+
+This repo contains a number of utility functions used by [Match Scrapper apps](https://github.com/WhoSay/dataslinger/tree/master/stream) 
+and this repo acts like an [NPM package](https://github.com/WhoSay/dataslinger/tree/master/stream/collectors/package.json#L29). 
 
 ## Logger
 
