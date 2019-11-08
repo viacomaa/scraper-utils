@@ -1,6 +1,6 @@
 const _ = require('lodash');
-const util = require('util');
 const winston = require('winston');
+const Elasticsearch = require('winston-elasticsearch');
 
 const customLevels = {
   levels: {
@@ -19,48 +19,65 @@ const customLevels = {
   }
 };
 
-module.exports = function({ enabled, level, depth, colorize, timestamp }) {
+module.exports = function({ enabled, level, colorize, timestamp, elasticLog, elasticUrl, elasticName }) {
   const transports = [];
 
   enabled && transports.push(
-    new (winston.transports.Console)({
-      name: 'errorsConsole',
+    new winston.transports.Console({
       level,
-      colorize,
-      timestamp,
-      prettyPrint: inspect({ colorize, depth }),
-      handleExceptions: true,
-      humanReadableUnhandledException: true
+      format: optionsToFormatter({
+        colorize,
+        timestamp,
+        prettyPrint: true,
+        handleExceptions: true
+      })
     })
   );
 
-  return new winston.Logger({
+  enabled && elasticLog && elasticUrl && elasticName && transports.push(
+    new Elasticsearch({
+      indexPrefix: `match-stream-${elasticName}`,
+      level,
+      format: optionsToFormatter({
+        handleExceptions: true
+      }),
+      clientOpts: {
+        node: elasticUrl,
+        buffering: true
+      }
+    })
+  );
+
+  winston.addColors(customLevels.colors);
+
+  return winston.createLogger({
     transports,
-    levels: customLevels.levels,
-    colors: customLevels.colors
+    levels: customLevels.levels
   });
 
 };
 
 
-/////
+// winston3.x changes how transports are formatting (to the worse, imho)
+// use this function to translate winston 2,x options into a combined formatter
+function optionsToFormatter(options) {
+  const formatters = {
+    timestamp: winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ssZ' }),
+    handleExceptions: winston.format.errors({ stack: true }),
+    colorize: winston.format.colorize(),
+    prettyPrint: winston.format.printf(({ timestamp, level, label, message, stack, ...rest }) => {
+      const namespace = label ? `(${label})` : '';
+      const errStack = stack ? `\n${stack}` : '';
+      const meta = rest && Object.keys(rest).length ? `${JSON.stringify(rest, undefined, 2)}` : '';
 
+      return `${timestamp} ${level}: ${namespace} ${message} ${meta} ${errStack}`;
+    })
+  };
 
-function inspect({ colorize, depth }) {
-  return (obj) => {
-    const inspectOpt = {
-        depth,
-        colors: colorize
-      };
+  const optionsFormatters = _.chain(options)
+    .map((value, key) => (value && formatters[key]))
+    .compact()
+    .value();
 
-    if (_.isObject(obj)) {
-      // do one more test to check for error objects
-      if (obj.date && obj.process && obj.os && obj.stack) {
-        return obj.stack.join('\n');
-      }
-      return util.inspect(obj, inspectOpt);
-    }
-
-    return obj;
-  }
+  return winston.format.combine(...optionsFormatters);
 }
