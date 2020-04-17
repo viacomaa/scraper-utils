@@ -62,13 +62,13 @@ module.exports = function({ enabled, level, colorize, timestamp, elasticLog, ela
 // use this function to translate winston 2,x options into a combined formatter
 function optionsToFormatter(options) {
   const formatters = {
-    timestamp: winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ssZ' }),
+    timestamp: winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:SSSZ' }),
     handleExceptions: winston.format.errors({ stack: true }),
     colorize: winston.format.colorize(),
     prettyPrint: winston.format.printf(({ timestamp, level, label, message, stack, ...rest }) => {
       const namespace = label ? `(${label})` : '';
       const errStack = stack ? `\n${stack}` : '';
-      const meta = rest && Object.keys(rest).length ? `${JSON.stringify(rest, undefined, 2)}` : '';
+      const meta = rest && Object.keys(rest).length ? `${JSON.stringify(rest, null, 2)}` : '';
 
       return `${timestamp} ${level}: ${namespace} ${message} ${meta} ${errStack}`;
     })

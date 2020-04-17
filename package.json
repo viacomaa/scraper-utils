@@ -1,6 +1,6 @@
 {
   "name": "scraper-utils",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "WHOSAY common level utilities",
   "main": "index.js",
   "scripts": {
