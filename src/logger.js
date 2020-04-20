@@ -25,7 +25,6 @@ module.exports = function({
   enabledElastic,
   elasticLevel,
   elasticUrl,
-  elasticName,
   elasticIndexPrefix,
   elasticTransform,
   elasticMappingTemplate,
@@ -74,7 +73,6 @@ module.exports = function({
     transports,
     levels: customLevels.levels
   });
-
 };
 
 
