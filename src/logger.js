@@ -33,6 +33,8 @@ module.exports = function({
 }) {
   const transports = [];
 
+  let elasticTransport;
+
   enabledConsole && transports.push(
     new winston.transports.Console({
       level: consoleLevel,
@@ -51,8 +53,8 @@ module.exports = function({
     }
   }
 
-  enabledElastic && transports.push(
-    new Elasticsearch({
+  if (enabledElastic) {
+    elasticTransport = new Elasticsearch({
       indexPrefix: elasticIndexPrefix,
       level: elasticLevel,
       format: optionsToFormatter({
@@ -64,15 +66,28 @@ module.exports = function({
       },
       mappingTemplate: elasticMappingTemplate,
       transformer: elasticTransform
-    })
-  );
+    });
+
+    transports.push(elasticTransport);
+  }
 
   winston.addColors(customLevels.colors);
 
-  return winston.createLogger({
+  const logger = winston.createLogger({
     transports,
     levels: customLevels.levels
   });
+
+  logger.on('error', (error) => {
+    // elasticTransport could generate an error if we try and push a field value type mismatch
+    // winston removes a transport if it generates an error. The following code adds it back again
+    if (elasticTransport && !logger.transports.includes(elasticTransport)) {
+      logger.error('Transport error detected', { error });
+      logger.add(elasticTransport);
+    }
+  });
+
+  return logger;
 };
 
 
