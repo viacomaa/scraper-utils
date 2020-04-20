@@ -19,12 +19,24 @@ const customLevels = {
   }
 };
 
-module.exports = function({ enabled, level, colorize, timestamp, elasticLog, elasticUrl, elasticName }) {
+module.exports = function({
+  enabledConsole,
+  consoleLevel,
+  enabledElastic,
+  elasticLevel,
+  elasticUrl,
+  elasticName,
+  elasticIndexPrefix,
+  elasticTransform,
+  elasticMappingTemplate,
+  colorize,
+  timestamp
+}) {
   const transports = [];
 
-  enabled && transports.push(
+  enabledConsole && transports.push(
     new winston.transports.Console({
-      level,
+      level: consoleLevel,
       format: optionsToFormatter({
         colorize,
         timestamp,
@@ -34,17 +46,25 @@ module.exports = function({ enabled, level, colorize, timestamp, elasticLog, ela
     })
   );
 
-  enabled && elasticLog && elasticUrl && elasticName && transports.push(
+  if (enabledElastic) {
+    if (!elasticUrl || !elasticIndexPrefix || !elasticLevel || !elasticMappingTemplate || !elasticTransform) {
+      throw new Error('Missing Elastic logger options')
+    }
+  }
+
+  enabledElastic && transports.push(
     new Elasticsearch({
-      indexPrefix: `match-stream-${elasticName}`,
-      level,
+      indexPrefix: elasticIndexPrefix,
+      level: elasticLevel,
       format: optionsToFormatter({
         handleExceptions: true
       }),
       clientOpts: {
         node: elasticUrl,
         buffering: true
-      }
+      },
+      mappingTemplate: elasticMappingTemplate,
+      transformer: elasticTransform
     })
   );
 
