@@ -14,6 +14,6 @@
     "redis": "2.8.0",
     "rsmq": "0.9.3",
     "winston": "3.2.1",
-    "winston-elasticsearch": "0.8.8"
+    "winston-elasticsearch": "0.8.4"
   }
 }
