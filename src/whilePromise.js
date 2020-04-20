@@ -26,7 +26,7 @@ module.exports = function(fn, {
             // each process has a max time to complete - it is stuck if it triggers the timeout
             .timeout(processTimeout)
             .tap(() => (errors = 0))
-            .tap(() => logger.info(`process ${processNum} completed in ${Date.now() - start}ms`))
+            .tap(() => logger.debug(`process ${processNum} completed in ${Date.now() - start}ms`))
             .catch(Bluebird.TimeoutError, () => {
               if (restartOnHang) {
                 running = false;

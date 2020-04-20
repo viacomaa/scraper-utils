@@ -1,6 +1,6 @@
 const _ = require('lodash');
-const util = require('util');
 const winston = require('winston');
+const Elasticsearch = require('winston-elasticsearch');
 
 const customLevels = {
   levels: {
@@ -19,48 +19,98 @@ const customLevels = {
   }
 };
 
-module.exports = function({ enabled, level, depth, colorize, timestamp }) {
+module.exports = function({
+  enabledConsole,
+  consoleLevel,
+  enabledElastic,
+  elasticLevel,
+  elasticUrl,
+  elasticIndexPrefix,
+  elasticTransform,
+  elasticMappingTemplate,
+  colorize,
+  timestamp
+}) {
   const transports = [];
 
-  enabled && transports.push(
-    new (winston.transports.Console)({
-      name: 'errorsConsole',
-      level,
-      colorize,
-      timestamp,
-      prettyPrint: inspect({ colorize, depth }),
-      handleExceptions: true,
-      humanReadableUnhandledException: true
+  let elasticTransport;
+
+  enabledConsole && transports.push(
+    new winston.transports.Console({
+      level: consoleLevel,
+      format: optionsToFormatter({
+        colorize,
+        timestamp,
+        prettyPrint: true,
+        handleExceptions: true
+      })
     })
   );
 
-  return new winston.Logger({
+  if (enabledElastic) {
+    if (!elasticUrl || !elasticIndexPrefix || !elasticLevel || !elasticMappingTemplate || !elasticTransform) {
+      throw new Error('Missing Elastic logger options')
+    }
+  }
+
+  if (enabledElastic) {
+    elasticTransport = new Elasticsearch({
+      indexPrefix: elasticIndexPrefix,
+      level: elasticLevel,
+      format: optionsToFormatter({
+        handleExceptions: true
+      }),
+      clientOpts: {
+        node: elasticUrl,
+        buffering: true
+      },
+      mappingTemplate: elasticMappingTemplate,
+      transformer: elasticTransform
+    });
+
+    transports.push(elasticTransport);
+  }
+
+  winston.addColors(customLevels.colors);
+
+  const logger = winston.createLogger({
     transports,
-    levels: customLevels.levels,
-    colors: customLevels.colors
+    levels: customLevels.levels
   });
 
+  logger.on('error', (error) => {
+    // elasticTransport could generate an error if we try and push a field value type mismatch
+    // winston removes a transport if it generates an error. The following code adds it back again
+    if (elasticTransport && !logger.transports.includes(elasticTransport)) {
+      logger.error('Transport error detected', { error });
+      logger.add(elasticTransport);
+    }
+  });
+
+  return logger;
 };
 
 
-/////
+// winston3.x changes how transports are formatting (to the worse, imho)
+// use this function to translate winston 2,x options into a combined formatter
+function optionsToFormatter(options) {
+  const formatters = {
+    timestamp: winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:SSSZ' }),
+    handleExceptions: winston.format.errors({ stack: true }),
+    colorize: winston.format.colorize(),
+    prettyPrint: winston.format.printf(({ timestamp, level, label, message, stack, ...rest }) => {
+      const namespace = label ? `(${label})` : '';
+      const errStack = stack ? `\n${stack}` : '';
+      const meta = rest && Object.keys(rest).length ? `${JSON.stringify(rest, null, 2)}` : '';
 
+      return `${timestamp} ${level}: ${namespace} ${message} ${meta} ${errStack}`;
+    })
+  };
 
-function inspect({ colorize, depth }) {
-  return (obj) => {
-    const inspectOpt = {
-        depth,
-        colors: colorize
-      };
+  const optionsFormatters = _.chain(options)
+    .map((value, key) => (value && formatters[key]))
+    .compact()
+    .value();
 
-    if (_.isObject(obj)) {
-      // do one more test to check for error objects
-      if (obj.date && obj.process && obj.os && obj.stack) {
-        return obj.stack.join('\n');
-      }
-      return util.inspect(obj, inspectOpt);
-    }
-
-    return obj;
-  }
+  return winston.format.combine(...optionsFormatters);
 }

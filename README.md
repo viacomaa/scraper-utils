@@ -7,7 +7,7 @@ and this repo acts like an [NPM package](https://github.com/WhoSay/dataslinger/t
 
 ## Logger
 
-A [winston](https://github.com/winstonjs/winston/tree/2.x) based logger with common configurations.
+A [winston](https://github.com/winstonjs/winston) based logger with common configurations.
 
 ## Queue Manager
 

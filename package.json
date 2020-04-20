@@ -1,6 +1,6 @@
 {
   "name": "scraper-utils",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "WHOSAY common level utilities",
   "main": "index.js",
   "scripts": {
@@ -9,10 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bluebird": "3.5.1",
-    "lodash": "4.17.13",
+    "bluebird": "3.7.2",
+    "lodash": "4.17.15",
     "redis": "2.8.0",
     "rsmq": "0.9.3",
-    "winston": "2.4.0"
+    "winston": "3.2.1",
+    "winston-elasticsearch": "0.8.4"
   }
 }
