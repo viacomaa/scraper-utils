@@ -41,8 +41,7 @@ module.exports = function({
       format: optionsToFormatter({
         colorize,
         timestamp,
-        prettyPrint: true,
-        handleExceptions: true
+        prettyPrint: true
       })
     })
   );
@@ -115,12 +114,12 @@ function optionsToFormatter(options) {
     handleExceptions: winston.format.errors({ stack: true }),
     colorize: winston.format.colorize(),
     json: winston.format.json({ replacer: replaceErrors }),
-    prettyPrint: winston.format.printf(({ timestamp, level, label, message, stack, ...rest }) => {
+    prettyPrint: winston.format.printf(({ timestamp, level, label, message, error, ...rest }) => {
       const namespace = label ? `(${label})` : '';
-      const errStack = stack ? `\n${stack}` : '';
+      const errStack = (error) ? `\nError: ${_.get(error, 'message')}\nStack: ${_.get(error, 'stack')}` : '';
       const meta = rest && Object.keys(rest).length ? `${JSON.stringify(rest, null, 2)}` : '';
 
-      return `${timestamp} ${level}: ${namespace} ${message} ${meta} ${errStack}`;
+      return `${timestamp} ${level}: ${namespace} ${message} ${meta} ${errStack}` ;
     })
   };
 
