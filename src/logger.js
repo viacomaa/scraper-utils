@@ -58,7 +58,8 @@ module.exports = function({
       indexPrefix: elasticIndexPrefix,
       level: elasticLevel,
       format: optionsToFormatter({
-        handleExceptions: true
+        handleExceptions: true,
+        json: true
       }),
       clientOpts: {
         node: elasticUrl,
@@ -91,6 +92,21 @@ module.exports = function({
 };
 
 
+function replaceErrors(key, value) {
+  if (value instanceof Buffer) {
+    return value.toString('base64');
+  } else if (value instanceof Error) {
+    const error = {};
+
+    Object.getOwnPropertyNames(value)
+      .forEach((key) => error[key] = value[key]);
+
+    return error;
+  }
+
+  return value;
+}
+
 // winston3.x changes how transports are formatting (to the worse, imho)
 // use this function to translate winston 2,x options into a combined formatter
 function optionsToFormatter(options) {
@@ -98,6 +114,7 @@ function optionsToFormatter(options) {
     timestamp: winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:SSSZ' }),
     handleExceptions: winston.format.errors({ stack: true }),
     colorize: winston.format.colorize(),
+    json: winston.format.json({ replacer: replaceErrors }),
     prettyPrint: winston.format.printf(({ timestamp, level, label, message, stack, ...rest }) => {
       const namespace = label ? `(${label})` : '';
       const errStack = stack ? `\n${stack}` : '';
