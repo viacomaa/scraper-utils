@@ -57,10 +57,6 @@ module.exports = function({
     elasticTransport = new Elasticsearch({
       indexPrefix: elasticIndexPrefix,
       level: elasticLevel,
-      format: optionsToFormatter({
-        handleExceptions: true,
-        json: true
-      }),
       clientOpts: {
         node: elasticUrl,
         buffering: true
