@@ -1,6 +1,6 @@
 {
   "name": "scraper-utils",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "WHOSAY common level utilities",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "lodash": "4.17.15",
     "redis": "2.8.0",
     "rsmq": "0.9.3",
+    "utils-error-to-json": "1.0.0",
     "winston": "3.2.1",
     "winston-elasticsearch": "0.8.4"
   }

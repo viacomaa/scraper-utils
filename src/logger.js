@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const winston = require('winston');
 const Elasticsearch = require('winston-elasticsearch');
+const toJSON = require( 'utils-error-to-json' );
 
 const customLevels = {
   levels: {
@@ -95,12 +96,7 @@ function replaceErrors(key, value) {
   if (value instanceof Buffer) {
     return value.toString('base64');
   } else if (value instanceof Error) {
-    const error = {};
-
-    Object.getOwnPropertyNames(value)
-      .forEach((key) => error[key] = value[key]);
-
-    return error;
+    return toJSON(value);
   }
 
   return value;
