@@ -47,7 +47,7 @@ module.exports = class {
     });
 
     // hookup redis client event handlers
-    redisClient.on('error', e => this.logger.info('Redis error', e, e.stack));
+    redisClient.on('error', error => this.logger.info('Redis error', { error }));
     redisClient.on('connect', () => this.logger.info('Connected to redis', { host, queueName: this.queueName }));
     redisClient.on('reconnecting', () => {
       this.logger.info('Lost connection to redis - attempting to reconnect', { host, queueName: this.queueName });
@@ -69,7 +69,7 @@ module.exports = class {
           }
         })
         .then(() => (this.ready = true))
-        .catch(e => this.logger.error('Error listing Queues', e, e.stack));
+        .catch(error => this.logger.error('Error listing Queues', { error }));
     });
 
     this.rsmq = Bluebird.promisifyAll(new RedisSMQ({
@@ -103,15 +103,18 @@ module.exports = class {
                 setTimeout(internalGetMessage.bind(this), intervals[intervalIdx]);
               } else {
                 intervalIdx = 0;
-                this.logger.info('Received message', { queueName: this.queueName, QueueMessage: msg });
+                this.logger.debug('Received message', { queueName: this.queueName, queueMessage: msg });
 
                 try {
                   const message = JSON.parse(msg.message);
                   const { id: queueId } = msg;
 
                   resolve({ message, queueId });
-                } catch (e) {
-                  this.logger.error('Could not parse the message payload - not processing', msg, e);
+                } catch (error) {
+                  this.logger.error('Could not parse the message payload - not processing', {
+                    error,
+                    queueMessage: msg
+                  });
                 }
               }
             })
