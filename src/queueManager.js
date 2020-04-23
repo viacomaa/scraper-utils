@@ -103,7 +103,7 @@ module.exports = class {
                 setTimeout(internalGetMessage.bind(this), intervals[intervalIdx]);
               } else {
                 intervalIdx = 0;
-                this.logger.debug('Received message', { queueName: this.queueName, queueMessage: msg });
+                this.logger.info('Received message', { queueName: this.queueName, queueMessage: msg });
 
                 try {
                   const message = JSON.parse(msg.message);
