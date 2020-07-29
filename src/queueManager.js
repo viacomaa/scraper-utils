@@ -176,4 +176,29 @@ module.exports = class {
       }
     });
   }
+
+  removeMessage(id) {
+    return new Bluebird((resolve, reject) => {
+      if (this.ready) {
+        removeMessage.call(this);
+      } else {
+        const interval = setInterval(() => {
+          if (this.ready) {
+            clearInterval(interval);
+            removeMessage.call(this);
+          }
+        }, 500);
+      }
+      //
+      function removeMessage() {
+        return this.rsmq
+          .deleteMessageAsync({
+            id,
+            qname: this.queueName,
+          })
+          .then(resolve)
+          .catch(reject);
+      }
+    });
+  }
 };
