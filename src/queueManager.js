@@ -34,7 +34,8 @@ module.exports = class {
 
     const redisClient = redis.createClient(port, host, {
       retry_strategy(options) {
-        this.logger.error('Redis Connection Failed - Retrying', { options });
+        // this.logger might not be ready if this is called immediately
+        this.logger && this.logger.error('Redis Connection Failed - Retrying', { options });
 
         if (options.total_retry_time > 1000 * 60 * 3) { //max of 3 minutes
           // End reconnecting after a specific timeout and flush all commands with a individual error
