@@ -153,4 +153,27 @@ module.exports = class {
     });
   }
 
+  queueStatus() {
+    return new Bluebird((resolve, reject) => {
+      if (this.ready) {
+        getStatus.call(this);
+      } else {
+        const interval = setInterval(() => {
+          if (this.ready) {
+            clearInterval(interval);
+            getStatus.call(this);
+          }
+        }, 500);
+      }
+      //
+      function getStatus() {
+        return this.rsmq
+          .getQueueAttributesAsync({
+            qname: this.queueName,
+          })
+          .then(resolve)
+          .catch(reject);
+      }
+    });
+  }
 };
