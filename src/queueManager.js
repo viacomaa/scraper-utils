@@ -17,15 +17,15 @@ module.exports = class {
   constructor({ queueName, namespace, logger, host = '127.0.0.1', port = 6379 } = {}) {
 
     if (!(queueName)) {
-      throw new Error('queueName is a required constructor parameter key')
+      throw new Error('queueName is a required constructor parameter key');
     }
 
     if (!(namespace)) {
-      throw new Error('namespace is a required constructor parameter key')
+      throw new Error('namespace is a required constructor parameter key');
     }
 
     if (!(logger)) {
-      throw new Error('logger is a required constructor parameter key')
+      throw new Error('logger is a required constructor parameter key');
     }
 
     this.ready = false;
@@ -53,6 +53,7 @@ module.exports = class {
       this.logger.info('Lost connection to redis - attempting to reconnect', { host, queueName: this.queueName });
       this.ready = false;
     });
+
     redisClient.on('ready', () => {
       this.logger.info('Redis client is ready - initialising queues', { queueName: this.queueName });
 
@@ -99,7 +100,7 @@ module.exports = class {
                   intervalIdx += 1;
                 }
 
-                this.logger.debug('getMessage tick',{  queueName: this.queueName, intervalIdx} );
+                this.logger.debug('getMessage tick', { queueName: this.queueName, intervalIdx });
                 setTimeout(internalGetMessage.bind(this), intervals[intervalIdx]);
               } else {
                 intervalIdx = 0;
@@ -115,6 +116,8 @@ module.exports = class {
                     error,
                     queueMessage: msg
                   });
+
+                  setTimeout(internalGetMessage.bind(this), intervals[0]);
                 }
               }
             })
@@ -127,75 +130,68 @@ module.exports = class {
     });
   }
 
-  addMessage(message, delay=0) {
-    return new Bluebird((resolve, reject) => {
-      if (this.ready) {
-        addMessage.call(this);
-      } else {
-        const interval = setInterval(() => {
-          if (this.ready) {
-            clearInterval(interval);
-            addMessage.call(this);
-          }
-        }, 500);
-      }
-      //
-      function addMessage() {
-        return this.rsmq
-          .sendMessageAsync({
-            qname: this.queueName,
-            message: JSON.stringify(message),
-            delay
-          })
-          .then(resolve)
-          .catch(reject);
-      }
+  addMessage(message, delay = 0) {
+    return this.runWhenReady(() => {
+      return this.rsmq
+        .sendMessageAsync({
+          qname: this.queueName,
+          message: JSON.stringify(message),
+          delay
+        });
     });
   }
 
   queueStatus() {
-    return new Bluebird((resolve, reject) => {
-      if (this.ready) {
-        getStatus.call(this);
-      } else {
-        const interval = setInterval(() => {
-          if (this.ready) {
-            clearInterval(interval);
-            getStatus.call(this);
-          }
-        }, 500);
-      }
-      //
-      function getStatus() {
-        return this.rsmq
-          .getQueueAttributesAsync({
-            qname: this.queueName,
-          })
-          .then(resolve)
-          .catch(reject);
-      }
+    return this.runWhenReady(() => {
+      return this.rsmq
+        .getQueueAttributesAsync({
+          qname: this.queueName
+        });
     });
   }
 
   removeMessage(id) {
+    return this.runWhenReady(() => {
+      return this.rsmq
+        .deleteMessageAsync({
+          id,
+          qname: this.queueName
+        });
+    });
+  }
+
+  clearQueue() {
+    return this.runWhenReady(() => {
+      return this.rsmq
+        .deleteQueueAsync({
+          qname: this.queueName
+        })
+        .then(() => {
+          return this.rsmq
+            .createQueueAsync({
+              qname: this.queueName
+            });
+        });
+    });
+  }
+
+  //
+
+  runWhenReady(fn) {
     return new Bluebird((resolve, reject) => {
       if (this.ready) {
-        removeMessage.call(this);
+        runner.call(this);
       } else {
         const interval = setInterval(() => {
           if (this.ready) {
             clearInterval(interval);
-            removeMessage.call(this);
+            runner.call(this);
           }
         }, 500);
       }
-      //
-      function removeMessage() {
-        return this.rsmq
-          .deleteMessageAsync({
-            id,
-            qname: this.queueName,
-          })
+
+      function runner() {
+        return fn.call(this)
           .then(resolve)
           .catch(reject);
       }
