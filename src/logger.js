@@ -73,7 +73,8 @@ module.exports = function({
 
   const logger = winston.createLogger({
     transports,
-    levels: customLevels.levels
+    levels: customLevels.levels,
+    silent: transports.length === 0
   });
 
   logger.on('error', (error) => {
