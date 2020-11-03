@@ -130,7 +130,7 @@ module.exports = class {
     });
   }
 
-  addMessage(message, delay = 0) {
+  addMessage(message, delay) {
     return this.runWhenReady(() => {
       return this.rsmq
         .sendMessageAsync({
