@@ -6,7 +6,7 @@ const fs = Bluebird.promisifyAll(require('fs'));
 AWS.config.setPromisesDependency(Bluebird);
 
 const ssm = new AWS.SSM({
-  region: process.env.AWS_DEFAULT_REGION
+  region: process.env.AWS_DEFAULT_REGION || 'us-east-1'
 });
 
 module.exports = function(appName = 'stream') {
