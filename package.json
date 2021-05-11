@@ -11,7 +11,7 @@
   "dependencies": {
     "aws-sdk": "2.142.0",
     "bluebird": "3.7.2",
-    "lodash": "4.17.19",
+    "lodash": "4.17.21",
     "redis": "2.8.0",
     "rsmq": "0.9.3",
     "winston": "3.2.1",
