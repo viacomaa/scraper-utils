@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const winston = require('winston');
-const Elasticsearch = require('winston-elasticsearch');
+const { ElasticsearchTransport } = require('winston-elasticsearch');
 
 const errorToJson = require('./errorToJson');
 
@@ -55,7 +55,7 @@ module.exports = function({
   }
 
   if (enabledElastic) {
-    elasticTransport = new Elasticsearch({
+    elasticTransport = new ElasticsearchTransport({
       indexPrefix: elasticIndexPrefix,
       level: elasticLevel,
       clientOpts: {
